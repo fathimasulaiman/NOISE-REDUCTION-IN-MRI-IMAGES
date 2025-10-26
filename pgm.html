@@ -1,0 +1,297 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>pgm</title><meta name="generator" content="MATLAB 9.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2025-10-26"><meta name="DC.source" content="pgm.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Prepare Workspcae</a></li><li><a href="#2">Input</a></li><li><a href="#3">add noise</a></li><li><a href="#4">algorithm -denoising</a></li><li><a href="#5">analysis</a></li></ul></div><h2 id="1">Prepare Workspcae</h2><pre class="codeinput">clear;
+clc;
+close <span class="string">all</span>;
+</pre><h2 id="2">Input</h2><pre class="codeinput">I=imread(<span class="string">'mri.png'</span>);
+figure;
+imshow(I)
+title(<span class="string">'input image'</span>)
+<span class="comment">%check size of imag</span>
+disp(<span class="string">'size of image :'</span>)
+disp(size(I))
+</pre><pre class="codeoutput">size of image :
+   258   258
+
+</pre><img vspace="5" hspace="5" src="pgm_01.png" alt=""> <h2 id="3">add noise</h2><pre class="codeinput">coils = 4;
+noise = 20;
+I=double(I);
+[im, params, M0, Kn, K0]=phantom_parallel(I,4,20,.5,0,[2,32]);
+<span class="comment">%%im=imresize(im,.5);</span>
+figure,imshow(im,[])
+title(<span class="string">'noisy image'</span>)
+</pre><pre class="codeoutput">Warning: Name is nonexistent or not a directory:
+C:\Users\fathi\OneDrive\Desktop\project MRI\mri denoising\common\common 
+</pre><img vspace="5" hspace="5" src="pgm_02.png" alt=""> <h2 id="4">algorithm -denoising</h2><pre class="codeinput"><span class="keyword">if</span> size(im,3)==3
+    im=rgb2gray(im);
+<span class="keyword">end</span>
+
+<span class="comment">%size of image</span>
+[r,c]=size(im);
+<span class="comment">% Estimating the noise veriance via skwness</span>
+sigma=Nsigmaest2(im);
+<span class="comment">%number of coils</span>
+L=coils;
+<span class="comment">%update sigma</span>
+sigma2=sigma*L;
+<span class="comment">%normalize</span>
+<span class="comment">%No of non local neighboring pixels</span>
+N=12;
+<span class="comment">%Add zeros to the boundary</span>
+im2=[im,zeros(r,N)];
+OutNLML=im;
+OutANLML=im;
+<span class="comment">%ML estimation</span>
+<span class="keyword">for</span> i=2:r-1
+    <span class="keyword">for</span> j=2:c-1
+        <span class="comment">%Signal estimation using NLML method</span>
+        A=im(i-1:i+1,j-1:j+1);
+        mi=A(:);
+        lnLA=lnL(mi,A,L,sigma2);
+        A_ml=max(max(lnLA));
+         OutNLML(i,j)=A_ml;
+        <span class="comment">%signal estimation using adaptive NLML</span>
+        neigborsA=A(:);
+        neigborsA(5)=[];
+        D=zeros(1,N);
+        <span class="keyword">for</span> n=1:N
+            R=im2(i-1:i+1,j+n-1:j+n+1);<span class="comment">%neigborhood region</span>
+            neigborsR=R(:);
+            neigborsR(5)=[];
+            D(n)=dist( neigborsA',neigborsR);
+        <span class="keyword">end</span>
+         D=sort(D);
+         lnLsigma=lnL(D,A,L,sigma2);
+         Diffsigma=abs(lnLsigma-sigma2);
+         [minvalue,k]=min(Diffsigma(:));
+         OutANLML(i,j)=lnLA(k);
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+figure,imshow(abs(OutNLML),[]);title( <span class="string">'NLML Output'</span>);
+figure,imshow(abs(OutANLML),[]);title( <span class="string">'ANLML Output'</span>);
+</pre><img vspace="5" hspace="5" src="pgm_03.png" alt=""> <img vspace="5" hspace="5" src="pgm_04.png" alt=""> <h2 id="5">analysis</h2><p>normalize and map into 0-255 range</p><pre class="codeinput">OutNLML=uint8((OutNLML./mean(OutNLML(:)))*255);
+OutANLML=uint8((OutANLML./mean(OutANLML(:)))*255);
+
+<span class="comment">%1.Structural similarity index measure</span>
+OutNLML=double(OutNLML);
+OutANLML=double(OutANLML);
+ssimval = ssim(double(I),OutNLML);
+fprintf(<span class="string">'NLML-Structural similarity index measure = %f\n'</span>,ssimval);
+ssimval = ssim(double(I),OutANLML);
+fprintf(<span class="string">'ANLML-Structural similarity index measure = %f\n'</span>,ssimval);
+<span class="comment">%2.Mean Squared Error</span>
+<span class="comment">%calculate the "square error" image.</span>
+squaredErrorImage = (double(I) - double(OutNLML)) .^ 2;
+<span class="comment">% Sum the Squared Image and divide by the number of elements</span>
+<span class="comment">% to get the Mean Squared Error.</span>
+mse1 = sum(sum(squaredErrorImage))/numel(squaredErrorImage);
+fprintf(<span class="string">'NLML-Mean Squared Error = %f\n'</span>,mse1);
+
+squaredErrorImage = (double(I) - double(OutANLML)) .^ 2;
+mse = sum(sum(squaredErrorImage))/numel(squaredErrorImage);
+fprintf(<span class="string">'ANLML-Mean Squared Error = %f\n'</span>,mse);
+
+<span class="comment">%3.Peak signal to Noise Ratio</span>
+<span class="comment">% Calculate PSNR  from the MSE</span>
+PSNR = 20 * log10( 256^2 / mse1);
+fprintf(<span class="string">'NLML-Peak signal to Noise Ratio = %f\n'</span>,PSNR);
+
+PSNR = 20 * log10( 256^2 / mse);
+fprintf(<span class="string">'ANLML-Peak signal to Noise Ratio = %f\n'</span>,PSNR);
+
+<span class="comment">%4.Maximum Absolute Difference</span>
+error =abs( double(I) - OutNLML);
+MAD = max(max(error));
+fprintf(<span class="string">'NLML-Maximum Difference = %f\n'</span>,MAD);
+error =abs( double(I) - OutANLML);
+MAD = max(max(error));
+fprintf(<span class="string">'ANLML-Maximum Difference = %f\n'</span>,MAD);
+</pre><pre class="codeoutput">NLML-Structural similarity index measure = 0.240998
+ANLML-Structural similarity index measure = 0.487524
+NLML-Mean Squared Error = 6748.877336
+ANLML-Mean Squared Error = 5315.817905
+NLML-Peak signal to Noise Ratio = 19.744968
+ANLML-Peak signal to Noise Ratio = 21.818197
+NLML-Maximum Difference = 241.000000
+ANLML-Maximum Difference = 197.000000
+</pre><p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2023a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% Prepare Workspcae
+clear;
+clc;
+close all;
+%% Input
+I=imread('mri.png');
+figure;
+imshow(I)
+title('input image')
+%check size of imag
+disp('size of image :')
+disp(size(I))
+%% add noise 
+coils = 4;
+noise = 20;
+I=double(I);
+[im, params, M0, Kn, K0]=phantom_parallel(I,4,20,.5,0,[2,32]);
+%%im=imresize(im,.5);
+figure,imshow(im,[])
+title('noisy image')
+%% algorithm -denoising
+if size(im,3)==3
+    im=rgb2gray(im);
+end
+
+%size of image
+[r,c]=size(im); 
+% Estimating the noise veriance via skwness 
+sigma=Nsigmaest2(im); 
+%number of coils 
+L=coils; 
+%update sigma
+sigma2=sigma*L;
+%normalize
+%No of non local neighboring pixels
+N=12;
+%Add zeros to the boundary
+im2=[im,zeros(r,N)];
+OutNLML=im;
+OutANLML=im;
+%ML estimation
+for i=2:r-1
+    for j=2:c-1
+        %Signal estimation using NLML method
+        A=im(i-1:i+1,j-1:j+1);
+        mi=A(:);
+        lnLA=lnL(mi,A,L,sigma2);
+        A_ml=max(max(lnLA));
+         OutNLML(i,j)=A_ml;
+        %signal estimation using adaptive NLML
+        neigborsA=A(:);
+        neigborsA(5)=[];
+        D=zeros(1,N);
+        for n=1:N
+            R=im2(i-1:i+1,j+n-1:j+n+1);%neigborhood region
+            neigborsR=R(:);
+            neigborsR(5)=[];            
+            D(n)=dist( neigborsA',neigborsR);
+        end
+         D=sort(D);
+         lnLsigma=lnL(D,A,L,sigma2);
+         Diffsigma=abs(lnLsigma-sigma2);
+         [minvalue,k]=min(Diffsigma(:));
+         OutANLML(i,j)=lnLA(k); 
+    end
+end
+
+figure,imshow(abs(OutNLML),[]);title( 'NLML Output');
+figure,imshow(abs(OutANLML),[]);title( 'ANLML Output');
+
+%%  analysis
+% normalize and map into 0-255 range
+OutNLML=uint8((OutNLML./mean(OutNLML(:)))*255);
+OutANLML=uint8((OutANLML./mean(OutANLML(:)))*255);
+
+%1.Structural similarity index measure
+OutNLML=double(OutNLML);
+OutANLML=double(OutANLML);
+ssimval = ssim(double(I),OutNLML);
+fprintf('NLML-Structural similarity index measure = %f\n',ssimval);
+ssimval = ssim(double(I),OutANLML);
+fprintf('ANLML-Structural similarity index measure = %f\n',ssimval);
+%2.Mean Squared Error
+%calculate the "square error" image.
+squaredErrorImage = (double(I) - double(OutNLML)) .^ 2;
+% Sum the Squared Image and divide by the number of elements
+% to get the Mean Squared Error. 
+mse1 = sum(sum(squaredErrorImage))/numel(squaredErrorImage);
+fprintf('NLML-Mean Squared Error = %f\n',mse1);
+
+squaredErrorImage = (double(I) - double(OutANLML)) .^ 2;
+mse = sum(sum(squaredErrorImage))/numel(squaredErrorImage);
+fprintf('ANLML-Mean Squared Error = %f\n',mse);
+
+%3.Peak signal to Noise Ratio
+% Calculate PSNR  from the MSE  
+PSNR = 20 * log10( 256^2 / mse1);
+fprintf('NLML-Peak signal to Noise Ratio = %f\n',PSNR);
+
+PSNR = 20 * log10( 256^2 / mse);
+fprintf('ANLML-Peak signal to Noise Ratio = %f\n',PSNR);
+
+%4.Maximum Absolute Difference
+error =abs( double(I) - OutNLML);
+MAD = max(max(error));
+fprintf('NLML-Maximum Difference = %f\n',MAD); 
+error =abs( double(I) - OutANLML);
+MAD = max(max(error));
+fprintf('ANLML-Maximum Difference = %f\n',MAD);
+##### SOURCE END #####
+--></body></html>
