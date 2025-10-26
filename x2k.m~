@@ -1,0 +1,6 @@
+function [Im]=x2k(ik)
+
+
+Im=fftshift(fftshift(fft2(ik),1),2);
+
+
